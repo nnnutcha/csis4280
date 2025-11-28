@@ -413,6 +413,31 @@ export default function NowPlayingScreen({ route, navigation }) {
     }
   };
 
+  const adjustPlaybackTime = async (seconds) => {
+    if (!soundObj || !duration) return;
+
+    try {
+      const status = await soundObj.getStatusAsync();
+      if (!status.isLoaded) return;
+
+      const currentPos = status.positionMillis / 1000;
+      const newTime = Math.min(Math.max(currentPos + seconds, 0), duration);
+
+      await soundObj.setPositionAsync(newTime * 1000);
+      setCurrentTime(newTime);
+      
+      // Resume playing if it was paused
+      if (!status.isPlaying) {
+        await soundObj.playAsync();
+        setIsPlaying(true);
+      }
+      
+      console.log(`Adjusted playback time by ${seconds}s: ${formatTime(currentPos)} -> ${formatTime(newTime)}`);
+    } catch (e) {
+      console.log("Adjust playback time error:", e);
+    }
+  };
+
   /* ─────────────────────────── Gestures (progress/volume/swipe/pinch) ─────────────────────────── */
 
   const progressPan = Gesture.Pan()
@@ -502,7 +527,20 @@ export default function NowPlayingScreen({ route, navigation }) {
 
     let feedback = "";
 
-    if (cmd.includes("play")) {
+    // Check for "add" or "at" (common speech recognition mistake) + seconds
+    if ((cmd.includes("add") || cmd.includes("at")) && cmd.includes("second")) {
+      // Extract number from command (e.g., "add 10 seconds" or "at 10 seconds")
+      const match = cmd.match(/(?:add|at)\s+(\d+)\s+second/);
+      const seconds = match ? parseInt(match[1]) : 10;
+      await adjustPlaybackTime(seconds);
+      feedback = `Added ${seconds} seconds`;
+    } else if ((cmd.includes("decrease") || cmd.includes("subtract") || cmd.includes("minus") || cmd.includes("reduce") || cmd.includes("back")) && cmd.includes("second")) {
+      // Extract number from command (e.g., "decrease 10 seconds")
+      const match = cmd.match(/(?:decrease|subtract|minus|reduce|back)\s+(\d+)\s+second/);
+      const seconds = match ? parseInt(match[1]) : 10;
+      await adjustPlaybackTime(-seconds);
+      feedback = `Decreased ${seconds} seconds`;
+    } else if (cmd.includes("play")) {
       await togglePlay();
       feedback = "Playing music";
     } else if (cmd.includes("stop") || cmd.includes("pause")) {
