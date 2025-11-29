@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { auth } from "../firebaseConfig";
 import { BASE_URL } from "@env";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function CreatePlaylistScreen({ navigation }) {
   const [playlistName, setPlaylistName] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const createPlaylist = async () => {
     try {
@@ -16,7 +17,15 @@ export default function CreatePlaylistScreen({ navigation }) {
         return;
       }
 
+      setLoading(true);
+      console.log("Creating playlist:", playlistName, "for user:", userId);
+
       const listRes = await fetch(`${BASE_URL}/api/playlist/list/${userId}`);
+      
+      if (!listRes.ok) {
+        throw new Error(`Server error: ${listRes.status}. Make sure backend is running.`);
+      }
+      
       const listData = await listRes.json();
 
       const exists = listData.some(
@@ -26,6 +35,7 @@ export default function CreatePlaylistScreen({ navigation }) {
       );
 
       if (exists) {
+        setLoading(false);
         alert("Playlist name already exists. Please use a different name.");
         return;
       }
@@ -36,15 +46,26 @@ export default function CreatePlaylistScreen({ navigation }) {
         body: JSON.stringify({ userId, playlistName })
       });
 
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`);
+      }
+
       const data = await res.json();
       console.log("RESULT:", data);
 
-      alert(`Playlist "${playlistName}" created!`);
+      setLoading(false);
+      setPlaylistName("");
+      
+      // Navigate back and show success message after navigation
       navigation.goBack();
+      setTimeout(() => {
+        alert(`Playlist "${playlistName}" created!`);
+      }, 100);
 
     } catch (err) {
       console.log("ERROR:", err);
-      alert("Error: " + err.message);
+      setLoading(false);
+      alert("Error: " + err.message + "\n\nMake sure the backend server is running.");
     }
   };
 
@@ -65,8 +86,16 @@ export default function CreatePlaylistScreen({ navigation }) {
         onChangeText={setPlaylistName}
       />
 
-      <TouchableOpacity style={styles.btn} onPress={createPlaylist}>
-        <Text style={styles.btnText}>Create</Text>
+      <TouchableOpacity 
+        style={[styles.btn, loading && styles.btnDisabled]} 
+        onPress={createPlaylist}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.btnText}>Create</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -164,5 +193,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: 0.3,
+  },
+
+  btnDisabled: {
+    opacity: 0.6,
   },
 });

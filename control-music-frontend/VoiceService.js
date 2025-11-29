@@ -1,6 +1,4 @@
-// VoiceService.js
 import { Audio } from "expo-av";
-// ⭐ ใช้ legacy filesystem เพื่อรองรับ readAsStringAsync
 import * as FileSystem from "expo-file-system/legacy";
 
 let recording = null;
@@ -54,9 +52,8 @@ export async function stopRecording(API_KEY) {
 
     await recording.stopAndUnloadAsync();
     const uri = recording.getURI();
-    console.log("📁 Recording URI:", uri);
+    console.log("Recording URI:", uri);
 
-    // ⭐ อ่านไฟล์ด้วย legacy, encoding ต้องเป็น "base64"
     const base64Audio = await FileSystem.readAsStringAsync(uri, {
       encoding: "base64",
     });
@@ -71,7 +68,7 @@ export async function stopRecording(API_KEY) {
 }
 
 async function sendToGoogleSTT(base64Audio, API_KEY) {
-  console.log("🚀 Sending to Google Cloud Speech-to-Text...");
+  console.log("Sending to Google Cloud Speech-to-Text...");
 
   const body = {
     audio: { content: base64Audio },

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
+import { useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "@env";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -9,14 +10,19 @@ export default function PlaylistDetailScreen({ route, navigation }) {
   const [songs, setSongs] = useState([]);
 
   const fetchSongs = async () => {
+    console.log("Fetching songs for playlist:", playlistId);
     const res = await fetch(`${BASE_URL}/api/playlist/songs/${playlistId}`);
     const data = await res.json();
+    console.log("Fetched songs:", data.length);
     setSongs(data);
   };
 
-  useEffect(() => {
-    fetchSongs();
-  }, []);
+  /* Auto-refresh when screen is focused */
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchSongs();
+    }, [playlistId])
+  );
 
   /* ───────────────────────────────────────── DELETE SONG ───────────────────────────────────────── */
   const deleteSong = async (songId) => {

@@ -169,10 +169,10 @@ export default function UserScreen() {
         <Text style={styles.infoValue}>{user.displayName || "No Name Set"}</Text>
         <Text style={styles.infoEmail}>{user.email}</Text>
 
-        <Text style={styles.statsText}>
+        {/* <Text style={styles.statsText}>
           Playlists Created:{" "}
           <Text style={{ fontWeight: "700" }}>{playlistsCount}</Text>
-        </Text>
+        </Text> */}
 
         {/* Buttons */}
         <TouchableOpacity

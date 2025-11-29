@@ -25,8 +25,9 @@ export default function PlaylistScreen({ route, navigation }) {
   /* Auto-refresh when screen is focused */
   useFocusEffect(
     React.useCallback(() => {
+      console.log("PlaylistScreen focused - fetching playlists...");
       fetchPlaylists();
-    }, [])
+    }, [userId])
   );
 
   /* ──────────────────────────────── DELETE PLAYLIST ─────────────────────────────── */
